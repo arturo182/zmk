@@ -6,6 +6,7 @@
 
 #include <zephyr/device.h>
 #include <zephyr/init.h>
+#include <zephyr/input/input.h>
 #include <zephyr/kernel.h>
 #include <zephyr/pm/device.h>
 #include <zephyr/pm/device_runtime.h>
@@ -122,6 +123,12 @@ int activity_event_listener(const zmk_event_t *eh) {
     return set_state(ZMK_ACTIVITY_ACTIVE);
 }
 
+void activity_input_listener(struct input_event *evt) {
+    activity_last_uptime = k_uptime_get();
+
+    set_state(ZMK_ACTIVITY_ACTIVE);
+}
+
 void activity_work_handler(struct k_work *work) {
     int32_t current = k_uptime_get();
     int32_t inactive_time = current - activity_last_uptime;
@@ -160,5 +167,7 @@ static int activity_init(void) {
 ZMK_LISTENER(activity, activity_event_listener);
 ZMK_SUBSCRIPTION(activity, zmk_position_state_changed);
 ZMK_SUBSCRIPTION(activity, zmk_sensor_event);
+
+INPUT_CALLBACK_DEFINE(NULL, activity_input_listener);
 
 SYS_INIT(activity_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
